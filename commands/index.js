@@ -1,9 +1,10 @@
 const puppeteer = require('puppeteer');
+const cheerio = require('cheerio');
 
-const link = 'https://www.ebay.es/b/Moviles-y-smartphones/9355/bn_16554114?_pgn=';
+const link = 'https://www.ebay.es/sch/i.html?_from=R40&_nkw=iphone&_sacat=9355&_pgn=';
 
 exports.start = async (ctx) => {
-    await ctx.telegram.sendMessage(ctx.chat.id, 'Market scraper!', {
+    await ctx.telegram.sendMessage(ctx.chat.id, 'use /scrap', {
         /*reply_markup: {
             /*keyboard: [[
                 {text: '/scrap'},
@@ -14,6 +15,11 @@ exports.start = async (ctx) => {
     });
 };
 
+/*
+    Leboncoin
+    Ebay.es
+*/
+
 exports.scrap = async (ctx) => {
     let flag = true
     let res = []
@@ -21,7 +27,7 @@ exports.scrap = async (ctx) => {
 
     try {
         let browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             slowMo: 100,
             devtools: true
         })
@@ -40,34 +46,28 @@ exports.scrap = async (ctx) => {
             await page.waitForSelector('a.pagination__next')
             console.log(counter)
 
-            let html = await page.evaluate(async () => {
-                let page = []
+            const content = await page.content();
 
-                try {
-                    let divs = document.querySelectorAll('div.s-item__wrapper')
-                
-                    divs.forEach(div => {
-                        let obj = {
-                            title: div.querySelector('h3.s-item__title') !== null
-                                ? div.querySelector('h3.s-item__title').innerText
-                                : 'NO TITLE',
-                            link: div.querySelector('a.s-item__link').href,
-                            price: div.querySelector('span.s-item__price') != null
-                                ? div.querySelector('span.s-item__price').innerText
-                                : 'NO PRICE'
-                        }
+            const $ = cheerio.load(content);
 
-                        page.push(obj)
-                    })
-                } catch (e) {
-                    console.log(e)
+            $('ul.srp-results').find('li.s-item').each((idx, elem) => {
+                let obj = {
+                    title: $(elem).find('div.s-item__title').text(),
+                    link: $(elem).find('a.s-item__link').attr('href'),
+                    price: $(elem).find('span.s-item__price').text(),
+                    image: $(elem).find('div.s-item__image-wrapper').find('img').attr('src'),
                 }
+                res.push(obj);
+            })
 
-                return page
-            }, {waitUntil: 'a.pagination-widget__page-link_next'})
-
-            await res.push(html)
-
+            /* ПОТОМ
+            await res.forEach(element => {
+                ctx.telegram.sendPhoto(ctx.chat.id, element.image, { parse_mode: 'HTML', caption:
+                    `Товар: <pre>${element.title}</pre>/nЦена: ${element.price}/nСсылка:`
+                });
+            });
+            //*/
+            
             flag = false // !
 
             for(let i in res) {
@@ -80,11 +80,9 @@ exports.scrap = async (ctx) => {
 
         res = res.flat()
 
-        //console.log(res);
+        console.log(res);
     } catch(e) {
         console.log(e)
-        await browser.close()
+        //await browser.close() // undefined ?
     }
-
-    await ctx.telegram.sendMessage(ctx.chat.id, JSON.stringify(res[0]));
 };
