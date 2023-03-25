@@ -1,5 +1,4 @@
 const {parsing} = require("./parsing");
-//const {messages} = require("../constants");
 
 const editMessage = async (ctx, text) => {await ctx.telegram.editMessageText(ctx.update.callback_query.message.chat.id, ctx.update.callback_query.message.message_id, null, text)}
 
@@ -36,7 +35,7 @@ exports.parse = async (ctx) => {
         default:
             await editMessage(ctx, 'Неизвестный сайт');
             return;
-    };
+    }
 };
 
 exports.textHandler = async (ctx) => {

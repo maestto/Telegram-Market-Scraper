@@ -1,6 +1,6 @@
 module.exports = {
     ebay: {
-        resultsСountSelector: 'h1.srp-controls__count-heading',
+        resultsCountSelector: 'h1.srp-controls__count-heading',
         nextPageButtonSelector: '.pagination__next',
         productsListSelector: 'ul.srp-results',
         productInfoSelector: 'li.s-item',
@@ -10,5 +10,8 @@ module.exports = {
             price: 'span.s-item__price',
             image: 'div.s-item__image-wrapper',
         },
+        sellerInfo: {
+            sellerSection: 'ul.ux-seller-section__content',
+        }
     },
 };
