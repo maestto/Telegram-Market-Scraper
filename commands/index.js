@@ -9,8 +9,8 @@ exports.scrap = async (ctx) => {
         reply_markup: {
             inline_keyboard: [
                 [
-                    { text: 'Ebay.es', callback_data: 'Ebay.es' },
-                    { text: 'Leboncoin', callback_data: 'Leboncoin' },
+                    { text: 'EBAY.ES', callback_data: 'EBAY.ES' },
+                    { text: 'MARKTPLAATS.NL', callback_data: 'MARKTPLAATS.NL' },
                 ],
                 [
                     { text: 'Отмена', callback_data: 'Отмена' }
@@ -25,12 +25,12 @@ exports.parse = async (ctx) => {
         case 'Отмена':
             await editMessage(ctx, 'Отменено');
             return;
-        case 'Ebay.es':
+        case 'EBAY.ES':
             await editMessage(ctx, 'Укажите ключевые слова. Для каждого нового запроса переходите на следующую строчку, например:\n\niphone 12\niphone 13');
             parsingParameters[ctx.update.callback_query.from.username] = {site: ctx.update.callback_query.data};
             break;
-        case 'Leboncoin':
-            await editMessage(ctx, 'Не работает');
+        case 'MARKTPLAATS.NL':
+            await editMessage(ctx, 'Не');
             return;
         default:
             await editMessage(ctx, 'Неизвестный сайт');
@@ -40,13 +40,27 @@ exports.parse = async (ctx) => {
 
 exports.textHandler = async (ctx) => {
     if(!parsingParameters && !parsingParameters[ctx.update.message.from.username]) return;
+    const text = ctx.update.message.text;
     switch (true) {
         case (/([0-9]+)-([0-9]+)/.test(ctx.update.message.text)):
-            if(!parsingParameters[ctx.update.message.from.username].keywords) ctx.reply('Сначала, укажите ключевые слова');
-            parsingParameters[ctx.update.message.from.username].priceRange = ctx.update.message.text.split('-');
-            ctx.reply(`Ключевые слова: [${parsingParameters[ctx.update.message.from.username].keywords}]\nЦеновой диапозон: ${parsingParameters[ctx.update.message.from.username].priceRange[0]}-${parsingParameters[ctx.update.message.from.username].priceRange[1]}.`);
-            await parsing(ctx, parsingParameters[ctx.update.message.from.username]);
-            delete parsingParameters[ctx.update.message.from.username];
+            if(!parsingParameters[ctx.update.message.from.username].keywords) return ctx.reply('Это похоже на указание параметра диапазона, сначала укажите ключевые слова! Для каждого нового запроса переходите на следующую строчку, например:\n\niphone 12\niphone 13');
+            const ranges = text.split('-');
+            switch (undefined) {
+                case parsingParameters[ctx.update.message.from.username].priceRange:
+                    parsingParameters[ctx.update.message.from.username].priceRange = ranges;
+                    ctx.reply(`Ценовой диапазон: [${parsingParameters[ctx.update.message.from.username].priceRange}]\nУкажите диапазон отзывов. Например, 0-100`);
+                    return;
+                case parsingParameters[ctx.update.message.from.username].reviewsRange:
+                    parsingParameters[ctx.update.message.from.username].reviewsRange = ranges;
+                    ctx.reply(`Диапазон отзывов: [${parsingParameters[ctx.update.message.from.username].reviewsRange}]\nУкажите диапазон количеству проданных товаров. Например, 0-100`);
+                    return;
+                case parsingParameters[ctx.update.message.from.username].salesRange:
+                    parsingParameters[ctx.update.message.from.username].salesRange = ranges;
+                    ctx.reply(JSON.stringify(parsingParameters[ctx.update.message.from.username]));
+                    await parsing(ctx, parsingParameters[ctx.update.message.from.username]);
+                    delete parsingParameters[ctx.update.message.from.username];
+                    return;
+            }
             return;
         case (/(.+)/.test(ctx.update.message.text)):
             parsingParameters[ctx.update.message.from.username].keywords = ctx.update.message.text.split('\n');

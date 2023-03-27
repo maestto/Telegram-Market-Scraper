@@ -1,6 +1,6 @@
 module.exports = {
     ebay: {
-        resultsCountSelector: 'h1.srp-controls__count-heading',
+        searchResultsCountSelector: 'h1.srp-controls__count-heading',
         nextPageButtonSelector: '.pagination__next',
         productsListSelector: 'ul.srp-results',
         productInfoSelector: 'li.s-item',
